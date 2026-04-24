@@ -1,100 +1,10 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <title>Adventure Game - Noah's Ark</title>
-    <style>
-        body, html { 
-            margin: 0; 
-            padding: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            position: fixed; 
-            background: #000; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            font-family: "Microsoft JhengHei", sans-serif;
-        }
-
-        canvas { 
-            border: 1px solid #333; 
-            background: #000; 
-            touch-action: none; 
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        #floodVideo {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        /* --- 旋轉提示遮罩 --- */
-        #orientation-tip {
-            display: none; /* 預設隱藏 */
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #000;
-            color: #fff;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        /* 偵測直向模式 (Portrait) */
-        @media screen and (orientation: portrait) {
-            #orientation-tip {
-                display: flex; /* 直向時顯示 */
-            }
-        }
-
-        .icon-rotate {
-            font-size: 60px;
-            margin-bottom: 20px;
-            animation: rotate-anim 2s infinite ease-in-out;
-        }
-
-        @keyframes rotate-anim {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(0deg); }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="orientation-tip">
-        <div class="icon-rotate">🔄</div>
-        <p>請橫放手機以獲得最佳體驗<br><span style="font-size: 0.8em; color: #888;">( 若已橫放請確認關閉「直向鎖定」 )</span></p>
-    </div>
-
-    <canvas id="game" width="800" height="450"></canvas>
-    
-    <video id="floodVideo" 
-           style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:100;"
-           preload="auto"
-           playsinline> 
-           <source src="assets/videos/flood.mp4" type="video/mp4">
-    </video>
-
 <script>
+    // --- 防誤觸重新整理 / 離開警告 ---
+    // 放在最外面，只要頁面載入就生效
+    window.onbeforeunload = function() {
+        return "遊戲進度尚未儲存，確定要離開嗎？";
+    };
+
     const unlocker = () => {
         // 1. 嘗試進入全螢幕
         const el = document.documentElement;
@@ -123,24 +33,3 @@
     document.addEventListener('mousedown', unlocker);
     document.addEventListener('touchstart', unlocker);
 </script>
-
-    <script src="data_items.js"></script>
-    <script src="scene_cassandra.js"></script>
-    <script src="scene_after.js"></script>
-    <script src="scene_jack.js"></script>
-    <script src="scene_noah.js"></script>
-    <script src="scene_mine.js"></script>
-    <script src="scene_pasture.js"></script>
-    <script src="scene_river.js"></script>
-    <script src="scene_castle.js"></script>
-    <script src="scene_bar.js"></script> 
-    <script src="scene_forest.js"></script>
-    <script src="scene_npcs.js"></script>
-    <script src="scene_past_river.js"></script>
-    <script src="scene_past_forest.js"></script>
-    <script src="scene_past_castle.js"></script>
-    <script src="scene_past_pasture.js"></script>
-    <script src="scene_past_gate.js"></script>
-    <script src="main_engine.js"></script>
-</body>
-</html>
