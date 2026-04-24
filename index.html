@@ -9,80 +9,117 @@
     
     <title>Adventure Game - Noah's Ark</title>
     <style>
-        /* 2. 徹底鎖定背景，防止手機網頁被拖動或產生回彈效果 */
         body, html { 
             margin: 0; 
             padding: 0;
             width: 100%; 
             height: 100%; 
             overflow: hidden; 
-            position: fixed; /* 關鍵：防止手機瀏覽器上下滑動 */
+            position: fixed; 
             background: #000; 
             display: flex; 
             justify-content: center; 
-            align-items: center; 
+            align-items: center;
+            font-family: "Microsoft JhengHei", sans-serif;
         }
 
         canvas { 
             border: 1px solid #333; 
             background: #000; 
-            touch-action: none; /* 禁用所有瀏覽器手勢，完全由 JS 控制 */
-            
-            /* 3. 讓遊戲畫面向下相容並保持橫向比例 */
-            max-width: 100vw;
-            max-height: 100vh;
+            touch-action: none; 
+            max-width: 100%;
+            max-height: 100%;
             width: auto;
             height: auto;
             object-fit: contain;
-
             -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 影片也同步保持全螢幕比例 */
         #floodVideo {
-            max-width: 100vw;
-            max-height: 100vh;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
+        }
+
+        /* --- 旋轉提示遮罩 --- */
+        #orientation-tip {
+            display: none; /* 預設隱藏 */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            color: #fff;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* 偵測直向模式 (Portrait) */
+        @media screen and (orientation: portrait) {
+            #orientation-tip {
+                display: flex; /* 直向時顯示 */
+            }
+        }
+
+        .icon-rotate {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: rotate-anim 2s infinite ease-in-out;
+        }
+
+        @keyframes rotate-anim {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
         }
     </style>
 </head>
 <body>
+
+    <div id="orientation-tip">
+        <div class="icon-rotate">🔄</div>
+        <p>請橫放手機以獲得最佳體驗<br><span style="font-size: 0.8em; color: #888;">( 若已橫放請確認關閉「直向鎖定」 )</span></p>
+    </div>
+
     <canvas id="game" width="800" height="450"></canvas>
     
     <video id="floodVideo" 
            style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:100;"
            preload="auto"
-           playsinline> <source src="assets/videos/flood.mp4" type="video/mp4">
+           playsinline> 
+           <source src="assets/videos/flood.mp4" type="video/mp4">
     </video>
 
-  <script>
-    // 建立一個「一次性」的解鎖器
+<script>
     const unlocker = () => {
-        // 1. 強行進入全螢幕
+        // 1. 嘗試進入全螢幕
         const el = document.documentElement;
         const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-        if (rfs) rfs.call(el).catch(e => {});
-
-        // 2. 解鎖 AudioContext (解決紅字關鍵)
-        if (window.AudioContext || window.webkitAudioContext) {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            if (context.state === 'suspended') context.resume();
+        if (rfs) {
+            rfs.call(el).catch(e => console.log("全螢幕請求被擋"));
         }
 
-        // 3. 影片與音樂預熱：播一個 0.1 秒的無聲動作
-        const video = document.getElementById('floodVideo');
-        if (video) { video.play().then(() => video.pause()).catch(e => {}); }
+        // 2. 解鎖 AudioContext
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (window.AudioContext) {
+            const context = new AudioContext();
+            if (context.state === 'suspended') {
+                context.resume().then(() => {
+                    console.log("音訊引擎已恢復");
+                });
+            }
+        }
         
         console.log("方舟門禁已解鎖");
         
-        // 移除監聽，避免重複執行
         document.removeEventListener('mousedown', unlocker);
         document.removeEventListener('touchstart', unlocker);
     };
 
-    // 使用最原始的事件，權限等級最高
     document.addEventListener('mousedown', unlocker);
     document.addEventListener('touchstart', unlocker);
 </script>
