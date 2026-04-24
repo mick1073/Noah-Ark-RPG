@@ -15,80 +15,81 @@
             border: 1px solid #333; background: #000; touch-action: none; 
             max-width: 100%; max-height: 100%; object-fit: contain;
         }
-        /* --- 引導按鈕樣式 --- */
+        
+        /* --- 1. 引導按鈕層 (最高級別) --- */
         #line-guide {
             display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%; background: rgba(0,0,0,0.9);
-            z-index: 10000; flex-direction: column; justify-content: center; align-items: center;
+            width: 100%; height: 100%; background: #000;
+            z-index: 10001; /* 確保在最最最上面 */
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; box-sizing: border-box;
         }
         .start-btn {
-            padding: 15px 30px; font-size: 20px; background: #4CAF50;
+            padding: 20px 40px; font-size: 22px; background: #4CAF50;
             color: white; border: none; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 0 20px rgba(76,175,80,0.5);
+            box-shadow: 0 0 20px rgba(76,175,80,0.5); font-weight: bold;
         }
-        /* --- 旋轉提示 --- */
+
+        /* --- 2. 旋轉提示層 (次高級別) --- */
         #orientation-tip {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; color: #fff; z-index: 9999; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
         }
-        @media screen and (orientation: portrait) { #orientation-tip { display: flex; } }
+
+        /* 只有當啟動層隱藏時，才允許顯示旋轉提示 (關鍵修正) */
+        @media screen and (orientation: portrait) { 
+            body:not(.in-app) #orientation-tip { display: flex; } 
+        }
     </style>
 </head>
-<body>
-
-    <div id="line-guide">
+<body class=""> <div id="line-guide">
         <button class="start-btn" onclick="goToExternal()">⛴️ 點擊啟動「方舟」</button>
-        <p style="color: #888; margin-top: 15px; font-size: 14px;">( 將自動開啟外部瀏覽器以獲得最佳體驗 )</p>
+        <p style="color: #aaa; margin-top: 20px; font-size: 15px; line-height: 1.6;">
+            偵測到您在 App 內開啟<br>
+            請點擊按鈕跳轉至瀏覽器以正常遊玩
+        </p>
     </div>
 
     <div id="orientation-tip">
-        <div style="font-size: 60px;">🔄</div>
+        <div style="font-size: 60px; margin-bottom: 20px;">🔄</div>
         <p>請橫放手機以獲得最佳體驗</p>
     </div>
 
     <canvas id="game" width="800" height="450"></canvas>
+    
     <video id="floodVideo" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:100;" preload="auto" playsinline> 
         <source src="assets/videos/flood.mp4" type="video/mp4">
     </video>
 
 <script>
-    // 1. 偵測環境：是否在 LINE 或 Facebook/Messenger 內
     const ua = navigator.userAgent;
     const isLine = ua.indexOf('Line') > -1;
-    // 臉書偵測包含 FBAN(App), FBAV(版本), Messenger 等關鍵字
     const isFb = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1 || ua.indexOf('Messenger') > -1 || ua.indexOf('FB_IAB') > -1;
     const hasParam = window.location.href.indexOf('openExternalBrowser=1') > -1;
 
-    // 2. 初始畫面判定
+    // --- 邏輯判斷 ---
     if ((isLine || isFb) && !hasParam) {
-        // 頁面載入後，如果還在內建瀏覽器，顯示引導層
-        window.addEventListener('DOMContentLoaded', () => {
-            const guide = document.getElementById('line-guide');
-            const btn = guide.querySelector('.start-btn');
-            
-            guide.style.display = 'flex';
-            
-            if (isFb) {
-                btn.innerHTML = "⛴️ 啟動「方舟」<br><span style='font-size:14px'>(建議由右上角選單開啟)</span>";
-            }
-        });
+        // 在 App 內：顯示按鈕，並標記 class 暫時停用旋轉提示
+        document.body.classList.add('in-app');
+        document.getElementById('line-guide').style.display = 'flex';
+        
+        if (isFb) {
+            const btn = document.querySelector('.start-btn');
+            btn.innerHTML = "⛴️ 啟動「方舟」";
+        }
     }
 
-    // 3. 統一的點擊處理函式
     function goToExternal() {
         if (isFb) {
-            // 臉書無法自動跳轉，所以彈出提示教學生怎麼做
-            alert("【重要提示】\n臉書瀏覽器限制較多，請點擊螢幕右上角的「三個點 (...)」或「分享」圖標，選擇「在瀏覽器中開啟」，遊戲才能全螢幕並有聲音喔！");
+            alert("【臉書開啟提示】\n\n請點擊右上角「...」選單\n選擇「在瀏覽器中開啟」\n\n這樣遊戲才會有聲音且能全螢幕喔！");
         } else {
-            // LINE 或其他環境嘗試自動跳轉
             let url = window.location.href;
             url += (url.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
             window.location.href = url;
         }
     }
 
-    // 4. 解鎖遊戲引擎與音訊
     const unlocker = () => {
         const el = document.documentElement;
         const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
@@ -106,7 +107,6 @@
     document.addEventListener('mousedown', unlocker);
     document.addEventListener('touchstart', unlocker);
 </script>
-
 
     <script src="data_items.js"></script>
     <script src="scene_cassandra.js"></script>
