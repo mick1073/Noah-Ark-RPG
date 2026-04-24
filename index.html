@@ -53,20 +53,42 @@
     </video>
 
 <script>
-    // 偵測是否為 LINE
-    const isLine = navigator.userAgent.indexOf('Line') > -1;
+    // 1. 偵測環境：是否在 LINE 或 Facebook/Messenger 內
+    const ua = navigator.userAgent;
+    const isLine = ua.indexOf('Line') > -1;
+    // 臉書偵測包含 FBAN(App), FBAV(版本), Messenger 等關鍵字
+    const isFb = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1 || ua.indexOf('Messenger') > -1 || ua.indexOf('FB_IAB') > -1;
     const hasParam = window.location.href.indexOf('openExternalBrowser=1') > -1;
 
-    if (isLine && !hasParam) {
-        document.getElementById('line-guide').style.display = 'flex';
+    // 2. 初始畫面判定
+    if ((isLine || isFb) && !hasParam) {
+        // 頁面載入後，如果還在內建瀏覽器，顯示引導層
+        window.addEventListener('DOMContentLoaded', () => {
+            const guide = document.getElementById('line-guide');
+            const btn = guide.querySelector('.start-btn');
+            
+            guide.style.display = 'flex';
+            
+            if (isFb) {
+                btn.innerHTML = "⛴️ 啟動「方舟」<br><span style='font-size:14px'>(建議由右上角選單開啟)</span>";
+            }
+        });
     }
 
+    // 3. 統一的點擊處理函式
     function goToExternal() {
-        let url = window.location.href;
-        url += (url.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
-        window.location.href = url;
+        if (isFb) {
+            // 臉書無法自動跳轉，所以彈出提示教學生怎麼做
+            alert("【重要提示】\n臉書瀏覽器限制較多，請點擊螢幕右上角的「三個點 (...)」或「分享」圖標，選擇「在瀏覽器中開啟」，遊戲才能全螢幕並有聲音喔！");
+        } else {
+            // LINE 或其他環境嘗試自動跳轉
+            let url = window.location.href;
+            url += (url.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
+            window.location.href = url;
+        }
     }
 
+    // 4. 解鎖遊戲引擎與音訊
     const unlocker = () => {
         const el = document.documentElement;
         const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
@@ -84,6 +106,7 @@
     document.addEventListener('mousedown', unlocker);
     document.addEventListener('touchstart', unlocker);
 </script>
+
 
     <script src="data_items.js"></script>
     <script src="scene_cassandra.js"></script>
