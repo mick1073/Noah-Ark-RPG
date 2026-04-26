@@ -31,7 +31,7 @@ function renderStealthGame() {
     const bg = images.bgPasture;
     const currentStep = StealthGame.state.currentStep;
     const totalSteps = StealthGame.config.totalSteps;
-    const isWin = currentStep >= totalSteps;
+    const isWin = currentStep >= totalSteps; // 判斷是否進度已滿
     const renderProgress = currentStep / totalSteps;
     const stepScale = 1.0 + (currentStep * 0.1);
     const progress = currentStep / totalSteps;
@@ -57,10 +57,10 @@ function renderStealthGame() {
     }
     ctx.restore();
 
-   if (isWin && !StealthGame.state.isCaught) {
+    if (isWin && !StealthGame.state.isCaught) {
         if (typeof drawUI === "function") drawUI();
         
-        // 如果已經「偷到手了」，只顯示黃字，不畫遮罩和其他白字
+        // 如果已經「偷到手了」
         if (StealthGame.state.finalCaught) {
             ctx.save();
             ctx.textAlign = "center";
@@ -68,14 +68,21 @@ function renderStealthGame() {
             ctx.font = "bold 32px 'Microsoft JhengHei'";
             ctx.fillText(StealthGame.state.lastResult, 400, 130);
             ctx.restore();
-            return; // 結束渲染，不跑後面的遮罩和進度條
-        }}
+            return; 
+        }
+        // ✨ 在這裡，當 isWin 但還沒 finalCaught 時，
+        // 我們不 return，讓它繼續跑下去，但我們會跳過遮罩繪製。
+    }
 
     // --- 遮罩與 UI ---
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; 
-    ctx.fillRect(0, 0, 800, 450);
+    // 【關鍵修正】：只有在「還沒贏」且「沒被抓」的情況下才畫黑遮罩
+    if (!isWin && !StealthGame.state.isCaught) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; 
+        ctx.fillRect(0, 0, 800, 450);
+    }
 
     if (StealthGame.state.isCaught) {
+        // ... (被抓到的渲染邏輯保持不變) ...
         const ownerImg = images.npcOwner;
         if (ownerImg && ownerImg.complete) ctx.drawImage(ownerImg, -50, -20, 480, 600);
         
@@ -91,14 +98,9 @@ function renderStealthGame() {
         ctx.font = "bold 24px 'Microsoft JhengHei'";
         ctx.fillText("牧場主人：", 340, 190);
         ctx.font = "20px 'Microsoft JhengHei'";
-        
 
-       if (StealthGame.state.finalCaught) {
-            if (StealthGame.state.lastResult === "咦！這牛是假的" || StealthGame.state.lastResult === "咦！這牛是假的") {
-                ctx.fillText("「我說過不要再讓我看到你！」", 340, 230);
-            } else {
-                ctx.fillText("「偷牛賊，別再讓我看到你！」", 340, 230);
-            }
+        if (StealthGame.state.finalCaught) {
+            ctx.fillText("「偷牛賊，別再讓我看到你！」", 340, 230);
         } else {
             ctx.fillText("「是誰在那裡？偷牛賊嗎！」", 340, 230);
         }
@@ -113,19 +115,24 @@ function renderStealthGame() {
         ctx.font = "bold 20px 'Microsoft JhengHei'";
         ctx.fillText("逃跑", btn.x + 50, btn.y + 43);
         ctx.restore();
-    }else {
-        // --- 核心修正：只有在遊戲啟動中才增加動畫進度 ---
+    } else {
         if (StealthGame.state.isActive && StealthGame.state.animProgress < 1.0) {
             StealthGame.state.animProgress += 0.05;
         }
         ctx.save();
         ctx.textAlign = "center";
-        ctx.fillStyle = "white";
+        ctx.fillStyle = isWin ? "#FFFF00" : "white"; // 贏的時候進度條變黃色提醒
         ctx.font = "bold 26px 'Microsoft JhengHei'";
         const dots = "●".repeat(currentStep) + "○".repeat(totalSteps - currentStep);
         ctx.fillText(`潛行進度：${dots}`, 400, 50);
+        
         ctx.font = "20px 'Microsoft JhengHei'";
-        ctx.fillText("要偷到那頭母牛，小心不要發出聲響", 400, 90);
+        if (isWin) {
+            ctx.fillText("你已成功接近！快點擊母牛抓走牠！", 400, 90);
+        } else {
+            ctx.fillText("要偷到那頭母牛，小心不要發出聲響", 400, 90);
+        }
+
         if (StealthGame.state.lastResult) {
             ctx.fillStyle = "#FFFF00"; 
             ctx.font = "bold 22px 'Microsoft JhengHei'";
@@ -138,7 +145,8 @@ function renderStealthGame() {
         ctx.font = "bold 18px 'Microsoft JhengHei'";
         ctx.fillText("逃跑", quitBtn.x + 50, quitBtn.y + 27);
         ctx.restore();
-       if (!isWin && !StealthGame.state.isCaught) {
+
+        if (!isWin && !StealthGame.state.isCaught) {
             drawGrassRow(StealthGame.state.animProgress, StealthGame.state.animProgress); 
         } 
     }
