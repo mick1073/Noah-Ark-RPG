@@ -38,7 +38,7 @@ if (isEndingVideoPlaying) return;
         // 酒吧場景物件
         if (images.npcSeer && images.npcSeer.complete) ctx.drawImage(images.npcSeer, 330, 240, 160, 240);
         if (images.doorImg && images.doorImg.complete) ctx.drawImage(images.doorImg, 700, 330, 100, 100);
-        if (typeof drawDirectionArrow === "function") drawDirectionArrow(720, 250, 50, 50, "right");
+       
         
         // 酒吧對話 UI
         if (gameState === "SeerDialog") {
