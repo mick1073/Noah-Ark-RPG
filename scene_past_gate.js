@@ -305,239 +305,126 @@ function drawSpecialRedBtn(x, y, w, h, text) {
 }
 
 function renderNumberGameUI() {
-
     // A. 遮罩背景 (維持全黑)
-
     ctx.fillStyle = "black";
-
     ctx.fillRect(0, 0, 800, 450);
 
-
-
-    // B. 正上方規則說明 (稍微調小，留出空間)
-
+    // B. 正上方規則說明
     ctx.fillStyle = "#f1c40f";
-
     ctx.font = "bold 20px 'Microsoft JhengHei'";
-
     ctx.textAlign = "center";
-
     ctx.fillText("【 猜數字遊戲 】", 400, 30);
-
     ctx.font = "14px 'Microsoft JhengHei'";
-
     ctx.fillStyle = "#aaa";
-
     ctx.fillText("規則:從1-9選4個數字。A:數字位置皆對 | B:數字對位置錯", 400, 55);
 
-
-
     // --- 左側區域 (1-9 鍵盤 + 提交) ---
-
     const keyStartX = 100, keyStartY = 100, bSize = 65, gap = 15;
-
     for (let i = 0; i < 9; i++) {
-
         let x = keyStartX + (i % 3) * (bSize + gap);
-
         let y = keyStartY + Math.floor(i / 3) * (bSize + gap);
-
         
-
-        // 繪製按鈕底色
-
         ctx.fillStyle = currentGuess.includes(i + 1) ? "#333" : "rgba(212, 175, 55, 0.2)";
-
         ctx.strokeStyle = "#d4af37";
-
         ctx.lineWidth = 2;
-
         ctx.fillRect(x, y, bSize, bSize);
-
         ctx.strokeRect(x, y, bSize, bSize);
-
         
-
-        // 數字
-
         ctx.fillStyle = currentGuess.includes(i + 1) ? "#666" : "#d4af37";
-
         ctx.font = "bold 26px Arial";
-
         ctx.textAlign = "center";
-
         ctx.fillText(i + 1, x + bSize / 2, y + bSize / 2 + 10);
-
     }
-
-
-
-    // 提交按鈕 (與鍵盤拉開距離)
 
     const subX = keyStartX, subY = 360, subW = (bSize * 3) + (gap * 2);
-
     ctx.fillStyle = (currentGuess.length === 4) ? "rgba(39, 174, 96, 0.3)" : "rgba(0, 0, 0, 0)";
-
     ctx.strokeStyle = (currentGuess.length === 4) ? "#2ecc71" : "#555";
-
     ctx.lineWidth = 3;
-
     ctx.fillRect(subX, subY, subW, 45);
-
     ctx.strokeRect(subX, subY, subW, 45);
-
     ctx.fillStyle = (currentGuess.length === 4) ? "#2ecc71" : "#555";
-
     ctx.font = "bold 20px 'Microsoft JhengHei'";
-
     ctx.fillText("提 交 答 案", subX + subW / 2, subY + 30);
 
-
-
     // --- 右側區域 (輸入格 + 歷史紀錄) ---
-
     const rightX = 450;
 
-
-
-    // 1. 繪製 4 個輸入格 (放在右上)
-
     ctx.textAlign = "left";
-
     ctx.fillStyle = "#888";
-
     ctx.font = "16px 'Microsoft JhengHei'";
-
     ctx.fillText("目前輸入：", rightX, 90);
 
-
-
     for (let i = 0; i < 4; i++) {
-
         ctx.strokeStyle = "#d4af37";
-
         ctx.lineWidth = 2;
-
         ctx.strokeRect(rightX + i * 65, 105, 55, 55);
-
         if (currentGuess[i]) {
-
             ctx.fillStyle = "white";
-
             ctx.font = "bold 30px Arial";
-
             ctx.textAlign = "center";
-
             ctx.fillText(currentGuess[i], rightX + i * 65 + 27, 145);
-
         }
-
     }
 
-
-
-    // 2. 歷史紀錄看板
-
+    // --- 2. 歷史紀錄看板 (優化分頁邏輯) ---
     ctx.textAlign = "left";
-
     ctx.fillStyle = "#f1c40f";
-
-    ctx.font = "16px 'Microsoft JhengHei'";
-
-    ctx.fillText(`歷史紀錄 (剩餘次數: ${maxAttempts - guessHistory.length})`, rightX, 195);
-
+    ctx.font = "bold 18px 'Microsoft JhengHei'";
+    ctx.fillText(`歷史紀錄 (僅顯示最近6筆 / 剩餘: ${maxAttempts - guessHistory.length} 次)`, rightX, 195);
     
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.fillRect(rightX - 5, 205, 300, 180);
 
-    // 繪製歷史清單 (分左右兩欄顯示)
+    // 【核心修正】：只取最後 6 筆顯示
+    const displayHistory = guessHistory.slice(-6);
 
-    guessHistory.forEach((h, i) => {
-
-        let yPos = 225 + i * 22;
-
-        ctx.font = "16px Courier New";
-
+    displayHistory.forEach((h, i) => {
+        let yPos = 235 + i * 28; 
         
+        // 計算這筆紀錄原本的編號 (1, 2, 3...)
+        const actualIndex = guessHistory.length - displayHistory.length + i + 1;
 
-        // A. 顯示順序與數字
-
+        ctx.font = "14px Arial";
         ctx.textAlign = "left";
+        ctx.fillStyle = "#666";
+        ctx.fillText(`${actualIndex}.`, rightX, yPos);
 
-        ctx.fillStyle = "#aaa";
-
-        ctx.fillText(`${i + 1}.`, rightX, yPos);
-
-        ctx.fillStyle = "white";
-
-        ctx.fillText(`[ ${h.guess.split('').join(' ')} ]`, rightX + 30, yPos);
-
+        ctx.font = "bold 20px 'Courier New'";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(`[ ${h.guess.split('').join(' ')} ]`, rightX + 25, yPos);
         
-
-        // B. 拆解 A 和 B 的數值 (例如 "1A2B" 拆出 1 和 2)
-
         let aCount = h.result.split('A')[0];
-
         let bCount = h.result.split('A')[1].split('B')[0];
 
+        ctx.textAlign = "center";
+        ctx.font = "bold 22px Arial";
+        ctx.fillStyle = parseInt(aCount) > 0 ? "#2ecc71" : "#444";
+        ctx.fillText(`${aCount}A`, rightX + 185, yPos);
 
-
-        // C. 繪製 A (綠色或黃色)
-
-        ctx.fillStyle = "#f1c40f"; // 黃色
-
-        ctx.fillText(`${aCount}A`, rightX + 160, yPos);
-
-
-
-        // D. 繪製 B (橘色)
-
-        ctx.fillStyle = "#e67e22"; // 橘色
-
-        ctx.fillText(`${bCount}B`, rightX + 200, yPos);
-
+        ctx.fillStyle = parseInt(bCount) > 0 ? "#f1c40f" : "#444";
+        ctx.fillText(`${bCount}B`, rightX + 245, yPos);
     });
 
-
-
-    // G. 勝負處理
-
+    // G. 勝負處理 (確保在底層不被覆蓋)
     if (gameStatus !== "playing") {
-
         ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-
         ctx.fillRect(rightX - 10, 350, 320, 80);
-
         ctx.strokeStyle = "#d4af37";
-
         ctx.lineWidth = 2;
-
         ctx.strokeRect(rightX - 10, 350, 320, 80);
-
         
-
         ctx.textAlign = "center";
-
         ctx.font = "bold 28px 'Microsoft JhengHei'";
-
         
-
         if (gameStatus === "win") {
-
-            ctx.fillStyle = "#2ecc71"; // 綠色
-
+            ctx.fillStyle = "#2ecc71";
             ctx.fillText("遊 戲 勝 利", rightX + 150, 400);
-
         } else {
-
-            ctx.fillStyle = "#e74c3c"; // 紅色
-
+            ctx.fillStyle = "#e74c3c";
             ctx.fillText("遊 戲 失 敗", rightX + 150, 400);
-
         }
-
     }
-
 }
-
 function handleGameAction(tx, ty) {
     // A. 遊戲結束狀態：點擊畫面任何地方後的操作
     if (gameStatus !== "playing") {
