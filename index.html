@@ -29,6 +29,22 @@
             color: white; border: none; border-radius: 50px; cursor: pointer;
             box-shadow: 0 0 20px rgba(76,175,80,0.5); font-weight: bold;
         }
+        /* --- 3. 影片層修正 --- */
+/* 將兩支影片的 ID 寫在一起，共用置中與縮放邏輯 */
+#floodVideo, #ending_credits {
+    display: none; 
+    position: fixed; /* 使用 fixed 在手機上更穩定 */
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    
+    width: 100vw;   
+    height: 100vh;  
+    object-fit: contain; 
+    
+    background: #000; 
+    z-index: 10005; 
+} /* 確保這個大括號有蓋上 */
 
         /* --- 2. 旋轉提示層 (次高級別) --- */
         #orientation-tip {
@@ -58,9 +74,13 @@
 
     <canvas id="game" width="800" height="450"></canvas>
     
-    <video id="floodVideo" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:100;" preload="auto" playsinline> 
-        <source src="assets/videos/flood.mp4" type="video/mp4">
-    </video>
+<video id="floodVideo" preload="auto" playsinline webkit-playsinline> 
+    <source src="./assets/videos/flood.mp4" type="video/mp4">
+</video>
+
+<video id="ending_credits" preload="auto" playsinline webkit-playsinline> 
+    <source src="./assets/videos/ending_credits.mp4" type="video/mp4">
+</video>
 
 <script>
     const ua = navigator.userAgent;
