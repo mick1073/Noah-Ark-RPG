@@ -3,6 +3,7 @@ let jackScriptIndex = 0;
 
 let isJackChoosing = false;
 let isJackWaitingCow = false;
+let isJackTradeDone = false;
 let jackScripts = [];
 
 // 2. 繪製場景
@@ -153,23 +154,29 @@ function handleJackClick(tx, ty) {
     } // 這是對話模式的結束括號
 }
 
-// 初始化對話內容
 function startJackDialogue() {
     isJackTalking = true;
     jackScriptIndex = 0;
     isJackChoosing = false;
     isJackWaitingCow = false;
 
-  
-   
-    
-    jackScripts = [
-        "我怎麼會這麼笨？\n用我的牛去換這幾顆豆子？",
-        "雖然這些豆子有魔法，\n澆水能長出參天大樹",
-        "但這世界上根本沒有\n乾淨的水能灌溉了。",
-        "我家那頭母牛\n至少還能擠點牛奶。",
-        "你願意用母牛跟我換豆子嗎？"
-    ];
+    // ✨ 修改：如果交易過了，就只顯示嘲諷台詞
+    if (isJackTradeDone) {
+        jackScripts = [
+            "哈哈哈，",
+            "是你自己要跟我換的，",
+            "我可沒逼你。"
+        ];
+    } else {
+        // 原本的初次見面台詞
+        jackScripts = [
+            "我怎麼會這麼笨？\n用我的牛去換這幾顆豆子？",
+            "雖然這些豆子有魔法，\n澆水能長出參天大樹",
+            "但這世界上根本沒有\n乾淨的水能灌溉了。",
+            "我家那頭母牛\n至少還能擠點牛奶。",
+            "你願意用母牛跟我換豆子嗎？"
+        ];
+    }
 }
 
 // 畫對話框翻頁箭頭 (複用邏輯)
@@ -185,22 +192,20 @@ function drawDialogArrow() {
 
 // 接收物品邏輯 (當玩家把牛丟給傑克)
 function onJackReceivedItem(itemId) {
-    // 安全檢查：只有在傑克等牛的時候才處理
     if (!isJackWaitingCow) return;
 
     if (itemId === "cow") {
-        // --- 情況 A: 成功交易 ---
-        
         // 1. 道具所有權轉換
-        items.cow.isOwned = false;   // 失去母牛
-        items.beans.isOwned = true;  // 獲得魔豆
+        items.cow.isOwned = false;   
+        items.beans.isOwned = true;  
         
         // 2. 狀態切換
         isJackWaitingCow = false;
         isJackChoosing = false;
         isJackTalking = true;
+        isJackTradeDone = true; // ✨ 關鍵：標記交易已完成
 
-        // 3. 設定你要求的成功台詞
+        // 3. 交易當下的台詞（傑克此時還在裝客氣或是剛拿到牛的喜悅）
         jackScripts = [
             "這是你要的魔法豆子！", 
             "聽說只要一點點清澈的水，\n它就能長到天上去。", 
@@ -209,12 +214,9 @@ function onJackReceivedItem(itemId) {
         ];
         jackScriptIndex = 0;
 
-        // 4. 更新畫面 (重新排列包包，讓母牛消失，豆子出現)
         autoArrangeAll();
-        
-        console.log("交易完成：玩家被傑克嘲諷了，但拿到了魔豆。");
+        console.log("交易完成：標記已更新。");
     } else {
-        // --- 情況 B: 給錯了 (維持剛才的三句碎碎念邏輯) ---
         triggerJackExit("這不是我要的母牛啊..."); 
     }
 }
