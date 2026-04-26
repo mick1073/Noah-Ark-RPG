@@ -211,8 +211,6 @@ function drawUI() {
     if (isAnyTalking) {
         ctx.save();
 
-        
-        
         ctx.beginPath();
         ctx.moveTo(0, 450); 
         ctx.lineTo(0, 335); 
@@ -221,7 +219,6 @@ function drawUI() {
         ctx.lineTo(800, 450);
         ctx.closePath();
 
-       
         const bagGrad = ctx.createLinearGradient(0, 310, 0, 450);
         bagGrad.addColorStop(0, "#4e342e"); 
         bagGrad.addColorStop(0.1, "#3e2723"); 
@@ -234,7 +231,6 @@ function drawUI() {
         ctx.fill();
         ctx.shadowBlur = 0; 
 
-        
         ctx.strokeStyle = "rgba(141, 110, 99, 0.4)"; 
         ctx.setLineDash([6, 4]);
         ctx.lineWidth = 2;
@@ -246,36 +242,31 @@ function drawUI() {
         ctx.stroke();
         ctx.setLineDash([]); 
 
-        
         for (let i = 0; i < 6; i++) {
             const slotX = 25 + i * 128;
             const slotY = 350;
             const slotW = 90;
             const slotH = 90;
 
-            
             ctx.fillStyle = "#120907";
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(slotX, slotY, slotW, slotH, 10);
             else ctx.fillRect(slotX, slotY, slotW, slotH);
             ctx.fill();
 
-            
             ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
             ctx.lineWidth = 1;
             ctx.strokeRect(slotX, slotY, slotW, 1); 
 
-            
             ctx.strokeStyle = "#261511";
             ctx.lineWidth = 3;
             ctx.stroke();
         }
 
-                if (typeof items !== "undefined") {
+        if (typeof items !== "undefined") {
             Object.values(items).forEach(item => {
                 if (item.isOwned && item.imgObj && item.imgObj.complete) {
                     ctx.save();
-                    
                     ctx.shadowBlur = 8;
                     ctx.shadowColor = "black";
                     ctx.shadowOffsetY = 4;
@@ -284,28 +275,38 @@ function drawUI() {
                 }
             });
         }
+
+        // --- 新增：長按提示字體 ---
+        ctx.save();
+        ctx.font = "bold 14px 'Microsoft JhengHei'";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; 
+        ctx.fillText("💡 長按道具放大檢查", 400, 332);
+        ctx.restore();
+
         ctx.restore();
     }
 
-    
-    if (previewItem) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.fillRect(0, 0, 800, 450);
-        const bigSize = 250; 
-        const bx = 400 - bigSize / 2;
-        const by = 225 - bigSize / 2;
-        if (previewItem.imgObj.complete) {
-            ctx.drawImage(previewItem.imgObj, bx, by, bigSize, bigSize);
-        }
-        ctx.fillStyle = "#FF8C00";
-        ctx.font = "bold 36px 'Microsoft JhengHei'";
-        ctx.textAlign = "center";
-        ctx.fillText(previewItem.name, 400, by - 40);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.font = "18px 'Microsoft JhengHei'";
-        ctx.fillText("點擊任意處返回", 400, by + bigSize + 50);
-        ctx.textAlign = "left";
-    }
+    if (previewItem) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+        ctx.fillRect(0, 0, 800, 450);
+        const bigSize = 250; 
+        const bx = 400 - bigSize / 2;
+        const by = 225 - bigSize / 2;
+        if (previewItem.imgObj.complete) {
+            ctx.drawImage(previewItem.imgObj, bx, by, bigSize, bigSize);
+        }
+        ctx.fillStyle = "#FF8C00";
+        ctx.font = "bold 36px 'Microsoft JhengHei'";
+        ctx.textAlign = "center";
+        ctx.fillText(previewItem.name, 400, by - 40);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.font = "18px 'Microsoft JhengHei'";
+        ctx.fillText("點擊任意處返回", 400, by + bigSize + 50);
+        ctx.textAlign = "left";
+    }
 }
 
 function drawDirectionArrow(x, y, w, h, direction) {
