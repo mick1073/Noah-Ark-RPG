@@ -51,6 +51,7 @@ const sfx = {
     richdwarf: new Audio('assets/audio/richdwarf.mp3'),
     rich_bull: new Audio('assets/audio/rich_bull.mp3'),
     cleaner: new Audio('assets/audio/cleaner.mp3'),
+    itemfall: new Audio('assets/audio/itemfall.mp3'),
     blacksmith: new Audio('assets/audio/blacksmith.mp3'),
 };
 
@@ -846,19 +847,28 @@ function handleItemDrop(tx, ty) {
             }
         }      
         if (gameState === "game" && StealthGame.state.isActive && !StealthGame.state.isCaught) {
+    // ✨ 1. 在文字出現的同時，播放東西掉落的聲音
+    if (sfx && sfx.itemfall) {
+        sfx.itemfall.currentTime = 0;
+        sfx.itemfall.play().catch(e => console.log("掉落音效播放失敗", e));
+    }
+
     StealthGame.state.lastResult = "有東西從背包掉出來，發出聲響...";
     
-    // 這裡不要關掉 isActive，音樂才會繼續
+    // 為了防止此處被重複執行，先把 isActive 關掉
+    // 但請確保你的主循環切換音樂 BGM 邏輯不是單純看 isActive 就「停掉」音樂
+    StealthGame.state.isActive = false; 
+
+    // 2. 延遲 1.2 秒後，主人跳出來大罵
     setTimeout(() => {
-        if (typeof playFarmerSfx === "function") playFarmerSfx();
+        if (typeof playFarmerSfx === "function") {
+            playFarmerSfx(); // 這裡播放憤怒音效
+        }
         StealthGame.state.isCaught = true; 
         StealthGame.state.lastResult = ""; 
-        // ❌ 刪除這裡的 switchBGM('main')
+        // 這裡不執行 switchBGM('main')，直到點擊逃跑按鈕為止
     }, 1200); 
     
-    // 為了防止這個 if 在 1.2 秒內被重複執行，我們讓它進入一個等待狀態或直接改 isActive
-    StealthGame.state.isActive = false; // 這裡關掉 isActive 是對的，
-                                        // 但你要確保你的切換背景音樂邏輯不是「只」看 isActive。
     return; 
 }
 
