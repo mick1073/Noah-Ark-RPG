@@ -845,16 +845,23 @@ function handleItemDrop(tx, ty) {
                 return; 
             }
         }      
-        if (gameState === "game" && StealthGame.state.isActive) {
-            StealthGame.state.lastResult = "有東西從背包掉出來，發出聲響...";
-            StealthGame.state.isActive = false; 
-            setTimeout(() => {
-                StealthGame.state.isCaught = true; 
-                StealthGame.state.lastResult = ""; 
-switchBGM('main');
-            }, 1200); 
-            return; 
-        }
+        if (gameState === "game" && StealthGame.state.isActive && !StealthGame.state.isCaught) {
+    StealthGame.state.lastResult = "有東西從背包掉出來，發出聲響...";
+    
+    // 這裡不要關掉 isActive，音樂才會繼續
+    setTimeout(() => {
+        if (typeof playFarmerSfx === "function") playFarmerSfx();
+        StealthGame.state.isCaught = true; 
+        StealthGame.state.lastResult = ""; 
+        // ❌ 刪除這裡的 switchBGM('main')
+    }, 1200); 
+    
+    // 為了防止這個 if 在 1.2 秒內被重複執行，我們讓它進入一個等待狀態或直接改 isActive
+    StealthGame.state.isActive = false; // 這裡關掉 isActive 是對的，
+                                        // 但你要確保你的切換背景音樂邏輯不是「只」看 isActive。
+    return; 
+}
+
 if (window.isNpcTalking && window.activeNpcType === "yaf") {
             
             if (typeof onYafReceivedItem === "function") {
