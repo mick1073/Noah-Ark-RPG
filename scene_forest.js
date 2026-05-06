@@ -76,102 +76,108 @@ function handleForestClick(tx, ty) {
 
 function handleHamelinDialogClick(tx, ty) {
     const box = layout.textArea;
-    
-    // --- A. 遊戲結束後的處理 (贏或輸) ---
-   if (hamelinTaskStep === "hamelinWin" || hamelinTaskStep === "playerWin") {
+
+    // --- 區塊 A：遊戲結果/特殊結局後的處理 (點擊任意處關閉並切換狀態) ---
+    if (["hamelinWin", "playerWin", "replayWin", "replayLose"].includes(hamelinTaskStep)) {
         if (checkClick(tx, ty, box)) {
-            // 這裡已經在 checkGameOver 給過道具了，所以只處理狀態切換
+            // 第一次對戰後，永久切換到日常模式
+            if (hamelinTaskStep === "hamelinWin" || hamelinTaskStep === "playerWin") {
+                hamelinTaskStep = "after_game";
+            } else {
+                // 娛樂局完畢，回到日常選單
+                hamelinTaskStep = "after_game";
+            }
             isHamelinTalking = false;
-            hamelinTaskStep = "after_game"; // 永久切換到日常模式
-            // changeScene("forest_inside"); <-- 刪除這行，直接留在屋內
-            return; 
+            return;
         }
     }
 
-// --- C. 第二種對話：日常模式 ---
-   else if (hamelinTaskStep === "after_game") {
-    if (checkClick(tx, ty, layout.btnMouse)) {
-        // --- 核心連動檢查 ---
-        if (!hasMetQueen) {
-            // 如果還沒見過皇后，哈梅林不打算聊這件事
-            hamelinTaskStep = "mouse_locked"; 
-        } 
-        else if (isMouseGiven) {
-            hamelinTaskStep = "mouse_already_given"; 
-        } 
-        else {
-            // 見過皇后了，且還沒領過，正式進入領取流程
-            if (typeof addItem === "function") {
-                addItem("mouse"); 
-                showSystemMessage("獲得了：好朋友老鼠");
+    // --- 區塊 B：日常模式 (包含選單按鈕判定) ---
+    else if (hamelinTaskStep === "after_game") {
+        if (checkClick(tx, ty, layout.btnMouse)) {
+            if (!hasMetQueen) {
+                hamelinTaskStep = "mouse_locked";
+            } else if (isMouseGiven) {
+                hamelinTaskStep = "mouse_already_given";
+            } else {
+                if (typeof addItem === "function") {
+                    addItem("mouse");
+                    showSystemMessage("獲得了：好朋友老鼠");
+                }
+                isMouseGiven = true;
+                hamelinTaskStep = "give_mouse";
             }
-            isMouseGiven = true;
-            hamelinTaskStep = "give_mouse";
         }
-    }
         else if (checkClick(tx, ty, layout.btnCow)) {
-            hamelinTaskStep = "talk_cow";   // 討論母牛
+            hamelinTaskStep = "talk_cow";
         }
         else if (checkClick(tx, ty, layout.btnYaf)) {
-            hamelinTaskStep = "talk_yaf";   // 討論雅弗
+            hamelinTaskStep = "talk_yaf";
         }
         else if (checkClick(tx, ty, layout.btnReplay)) {
             isHamelinTalking = false;
-            initHamelinGame();              // 重新開始遊戲，注意：這時 winnerStep 會指向 replay 結局
-            hamelinTaskStep = "replaying";  // 標記現在是純娛樂局
+            initHamelinGame();
+            hamelinTaskStep = "replaying";
         }
         else if (checkClick(tx, ty, box)) {
             isHamelinTalking = false;
         }
+        return; // 選單處理完畢直接返回
     }
-    else if (["mouse_locked","give_mouse", "mouse_already_given", "talk_cow", "talk_yaf", "replayWin", "replayLose"].includes(hamelinTaskStep)) {
+
+    // --- 區塊 C：日常模式下的子對話 (點擊框框回到日常選單) ---
+    else if (["mouse_locked", "give_mouse", "mouse_already_given", "talk_cow", "talk_yaf"].includes(hamelinTaskStep)) {
         if (checkClick(tx, ty, box)) {
-            // 這裡不再進行 addItem，因為在 handleHamelinDialogClick 的 after_game 判斷中已經給過了
-            
-            // 單純回到日常選單狀態
             hamelinTaskStep = "after_game";
             isHamelinTalking = false;
         }
+        return;
     }
 
-    // --- B. 一般對話流程 ---
+    // --- 區塊 D：一般對話流程 (初始任務路徑) ---
 
-    // 1. 初始對話
-    if (hamelinTaskStep === "intro") {
+    // 1. 初始狀態
+    else if (hamelinTaskStep === "intro") {
         if (checkClick(tx, ty, box)) hamelinTaskStep = "askPay";
-    } 
-    // 2. 詢問付錢
+    }
+    // 2. 詢問是否付錢
     else if (hamelinTaskStep === "askPay") {
         if (checkClick(tx, ty, layout.btnYes)) {
             hamelinTaskStep = "accepted";
             showSystemMessage("你答應幫忙付錢。");
-        } 
-        else if (checkClick(tx, ty, layout.btnNo)) {
+        } else if (checkClick(tx, ty, layout.btnNo)) {
             hamelinTaskStep = "challenge";
         }
     }
-    // 3. 答應付錢後點擊「算了」
+    // 3. 答應付錢後，點擊「算了」進入威脅
     else if (hamelinTaskStep === "accepted") {
         if (checkClick(tx, ty, layout.btnNo)) {
-            hamelinTaskStep = "challenge";
+            hamelinTaskStep = "threaten";
         }
     }
-    // 4. 挑戰開始前對話
-    else if (hamelinTaskStep === "challenge" || hamelinTaskStep === "wrongItem") {
+    // 4. 挑戰前對話：點擊開始遊戲
+    else if (hamelinTaskStep === "challenge") {
         if (checkClick(tx, ty, box)) {
             isHamelinTalking = false;
-            // 準備進入遊戲時，hamelinTaskStep 最好先保留或清空，看你的邏輯
-            initHamelinGame(); 
+            initHamelinGame();
         }
     }
-    // 5. 給錢成功後結束 (金幣包路徑)
-    else if (hamelinTaskStep === "finish") {
-        if (checkClick(tx, ty, box)) {
-            isHamelinTalking = false;
-            hamelinTaskStep = "intro"; 
-        }
+    // 5. 負面回饋或任務結束：點擊後重置回 intro
+   else if (hamelinTaskStep === "wrongItem") {
+    if (checkClick(tx, ty, box)) {
+        // 點擊「這跟1000金幣差遠了」之後，進入威脅狀態
+        hamelinTaskStep = "threaten"; 
     }
 }
+else if (["threaten", "finish"].includes(hamelinTaskStep)) {
+    if (checkClick(tx, ty, box)) {
+        isHamelinTalking = false;
+        // 威脅完後回 intro，給錢成功後去日常模式
+        hamelinTaskStep = (hamelinTaskStep === "finish") ? "after_game" : "intro";
+    }
+}
+} // 函式結束
+
 
 function drawHamelinDialog() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; 
@@ -215,7 +221,15 @@ function drawHamelinDialog() {
         ctx.fillText("謝謝你幫我解除誤會。", textX, textY + 90);
         ctx.fillText("這是皇后的朋友-老鼠，", textX, textY + 120);
         ctx.fillText("這請你幫我還給她。", textX, textY + 150);
-    } 
+    }
+else if (hamelinTaskStep === "wrongItem") {
+    ctx.fillText("這什麼？跟 1000 金幣可差遠了！", textX, textY + 15);
+}
+ else if (hamelinTaskStep === "threaten") {
+    ctx.fillStyle = "white";
+    ctx.fillText("拿不出來就走開，", textX, textY + 15);
+    ctx.fillText("不然我可對你不利了！", textX, textY + 45);
+}
     else if (hamelinTaskStep === "mouse_already_given") {
         ctx.fillText("你當我吃飽很閒啊？", textX, textY + 15);
         ctx.fillText("都說是誤會一場了，", textX, textY + 45);
@@ -254,11 +268,11 @@ function drawHamelinDialog() {
         ctx.fillText("交出來，不然要你好看。", textX, textY + 45);
         drawChoiceButton(layout.btnNo, "算了", "#8b0000");
     } 
-    else if (hamelinTaskStep === "challenge" || hamelinTaskStep === "wrongItem") {
-        const line1 = hamelinTaskStep === "wrongItem" ? "這什麼？跟 1000 金幣可差遠了！" : "站住，你以為我這邊是說來就來說走就走嗎？";
-        ctx.fillText(line1, textX, textY);
-        ctx.fillText("想離開？除非你能贏得了我！", textX, textY + 30);
-    } 
+    else if (hamelinTaskStep === "challenge") {
+    // 只有在拒絕付錢時，才顯示開戰台詞
+    ctx.fillText("站住，你以為我這邊是說來就來說走就走嗎？", textX, textY);
+    ctx.fillText("想離開？除非你能贏得了我！", textX, textY + 30);
+}
     else if (hamelinTaskStep === "hamelinWin" || hamelinTaskStep === "playerWin") {
         const winLine = hamelinTaskStep === "hamelinWin" ? "哈哈，是我贏了！不過..." : "沒想到你竟然贏了我...";
         ctx.fillText(winLine, textX, textY);
@@ -285,23 +299,17 @@ function drawChoiceButton(rect, text, bgColor = "#3d2b1f") {
 }
 
 function onHamelinReceivedItem(itemKey) {
-    // 【嚴格限定】只有在哈梅林開口要錢 (accepted) 
-    // 或者 玩家剛給錯東西 (wrongItem) 正在重給時，才受理
-    const isReadyToReceive = (hamelinTaskStep === "accepted" || hamelinTaskStep === "wrongItem");
+    // 只有在要求付錢的階段給東西才有反應
+    const isReadyToReceive = (hamelinTaskStep === "accepted" || hamelinTaskStep === "wrongItem" || hamelinTaskStep === "threaten");
+    if (!isReadyToReceive) return;
 
-    if (!isReadyToReceive) {
-        // 時機不對（例如還在 intro、askPay 或 after_game 狀態），直接退回
-        return; 
-    }
-
-    // --- 進入此區代表時機正確 ---
     isHamelinTalking = true; 
 
     if (itemKey === "gold_bag") { 
         showSystemMessage("你交出了金幣。");
         hamelinTaskStep = "finish"; 
     } else {
-        // 雖然他在收錢，但你給了不對的東西
+        // 給錯東西，觸發嫌棄對話
         hamelinTaskStep = "wrongItem"; 
     }
 }
